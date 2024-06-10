@@ -261,7 +261,7 @@ class GPT4AllAddonPreferences(AddonPreferences):
                 "https://gpt4all.io/models/gguf/nomic-embed-text-v1.5.f16.gguf",
             ),
         },
-        default="orca-mini-3b-gguf2-q4_0.gguf",
+        default="Nous-Hermes-2-Mistral-7B-DPO.Q4_0.gguf",
     )
 
     def draw(self, context):
@@ -414,9 +414,9 @@ def request_answer(text: str) -> str:
 
         # output = model.generate(text, max_tokens=2000)
 
+        collected_history = " "
         if len(gpt.chat_history) > 0:
             recent_history = gpt.chat_history[-1:]
-            collected_history = ""
             for history_item in recent_history:
                 collected_history = collected_history + str(history_item.output)
         print(collected_history)
@@ -590,8 +590,6 @@ classes = (
     GPT_OT_SendMessage,
     GPT_OT_install_dependencies,
     GPT_OT_uninstall_dependencies,
-    GPT_OT_install_model,
-    GPT_OT_uninstall_model,
     ChatHistoryItem,
     GPT4AllAddonProperties,
     GPT4AllAddonPreferences,
