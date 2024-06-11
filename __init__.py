@@ -282,9 +282,25 @@ class GPT4AllAddonPreferences(AddonPreferences):
         default=2000,
     )
 
+    device_select: EnumProperty(
+        name="Device",
+        items={
+        ("cpu", "CPU", "Model will run on the central processing unit"),
+        ("gpu", "GPU", "Use Metal on ARM64 macOS, otherwise the same as 'kompute'"),
+        ("kompute", "Kompute", "Use the best GPU provided by the Kompute backend"),
+        ("cuda", "CUDA", "Use the best GPU provided by the CUDA backend"),
+        ("amd", "AMD", "Use the best GPU provided by the Kompute backend from this vendor"),
+        ("nvidia", "NVIDIA", "Use the best GPU provided by the Kompute backend from this vendor")
+        },
+        default="cuda",
+    ) 
+
+
     def draw(self, context):
         layout = self.layout
         layout.prop(self, "model_select")
+        layout.prop(self, "device_select")
+        layout.prop(self, "tokens")
 
         row = layout.row()
         row.operator("gpt4all.install_dependencies", text="Install Dependencies")
@@ -299,7 +315,6 @@ class GPT4AllAddonPreferences(AddonPreferences):
         row.operator("renderreminder.play_notification", text="", icon="PLAY")
         row.active = self.playsound
 
-        layout.prop(self, "tokens")
 
 
 class GPT_OT_sound_notification(Operator):
@@ -441,7 +456,7 @@ def request_answer(text: str) -> str:
             for history_item in recent_history:
                 collected_history = collected_history + str(history_item.output)
         print(collected_history)
-        model = GPT4All(model, device="gpu")
+        model = GPT4All(model, device=addon_prefs.device_select)
 
         with model.chat_session(collected_history):
             output = model.generate(text, max_tokens=tokens)
@@ -506,7 +521,7 @@ def request_selection_answer(text: str) -> str:
         addon_prefs = preferences.addons[__name__].preferences
         tokens = addon_prefs.tokens
 
-        model = GPT4All(model, device="gpu")  # , device='gpu') # device='amd', device='intel'
+        model = GPT4All(model, device=addon_prefs.device_select)
         system_template = gpt.chat_gpt_select_prefix + ": \n"
         with model.chat_session(system_template):
             output = model.generate(text, max_tokens=tokens)
