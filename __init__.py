@@ -1,10 +1,10 @@
 bl_info = {
-    "name": "Screenwriter Assistant GPT4All",
+    "name": "GPT4Blender",
     "author": "tintwotin",
-    "description": "Integrates the GPT4All model into Blender for script generation",
+    "description": "Integrates the GPT4All model into Blender Text Editor",
     "blender": (3, 0, 0),
-    "version": (0, 0, 3),
-    "location": "Text Editor > Screenwriter Tab > Screenwriter Assistant",
+    "version": (0, 0, 1),
+    "location": "Text Editor > GPT4All",
     "warning": "",
     "category": "Text Editor",
 }
@@ -17,8 +17,11 @@ import os
 import subprocess
 import platform
 import site
-from bpy.props import StringProperty, BoolProperty, EnumProperty, CollectionProperty, PointerProperty
+from bpy.props import StringProperty, BoolProperty, EnumProperty, CollectionProperty, PointerProperty, IntProperty
 from bpy.types import Operator, AddonPreferences, Panel, PropertyGroup
+
+# Only GPU is supported, but can be changed:
+# model = GPT4All(model, device="gpu")  # , device='gpu') # device='amd', device='intel'
 
 
 def isWindows():
@@ -41,9 +44,11 @@ def python_exec():
     elif isMacOS():
         try:
             # 2.92 and older
+
             path = bpy.app.binary_path_python
         except AttributeError:
             # 2.93 and later
+
             import sys
 
             path = sys.executable
@@ -51,7 +56,7 @@ def python_exec():
     elif isLinux():
         return os.path.join(sys.prefix, "bin", "python")
     else:
-        print("sorry, still not implemented for ", os.name, " - ", platform.system)
+        print("Sorry, still not implemented for ", os.name, " - ", platform.system)
 
 
 def import_module(module, install_module):
@@ -76,15 +81,20 @@ def import_module(module, install_module):
 
 
 # Function to check and install GPT4All
+
+
 def ensure_gpt4all_installed():
     module = "gpt4all"
 
     try:
         from gpt4all import GPT4All
+
+        print("Checking: GPT4ALL is installed.")
     except Exception as e:
         print(f"{e}")
         import_module(module, module)
-        get_supported_models()
+        # get_supported_models()
+
         return []
 
 
@@ -110,8 +120,10 @@ def uninstall_module_with_dependencies(module_name):
     pybin = python_exec()
     dependencies = get_module_dependencies(module_name)
     # Uninstall the module
+
     subprocess.run([pybin, "-m", "pip", "uninstall", "-y", module_name])
     # Uninstall the dependencies
+
     for dependency in dependencies:
         print("\n ")
         if len(dependency) > 5 and str(dependency[5].lower) != "numpy":
@@ -128,6 +140,7 @@ def get_supported_models():
         print(models)
         #        supported_models = [(model, model, f"Use {model} model") for model in models]
         #        print("Supported models:", supported_models)
+
         return models
     except Exception as e:
         print(f"Error retrieving supported models: {e}")
@@ -264,6 +277,11 @@ class GPT4AllAddonPreferences(AddonPreferences):
         default="Nous-Hermes-2-Mistral-7B-DPO.Q4_0.gguf",
     )
 
+    tokens: IntProperty(
+        name="Max Tokens",
+        default=2000,
+    )
+
     def draw(self, context):
         layout = self.layout
         layout.prop(self, "model_select")
@@ -280,6 +298,8 @@ class GPT4AllAddonPreferences(AddonPreferences):
             row.prop(self, "usersound", text="")
         row.operator("renderreminder.play_notification", text="", icon="PLAY")
         row.active = self.playsound
+
+        layout.prop(self, "tokens")
 
 
 class GPT_OT_sound_notification(Operator):
@@ -361,7 +381,7 @@ class GPT4AllAddonProperties(PropertyGroup):
     chat_gpt_select_prefix: StringProperty(
         name="Select Prefix",
         description="Selection prefix text",
-        default="",
+        default="Highlight text, and add prompt to rewrite it.",
         options={"TEXTEDIT_UPDATE"},
     )
     chat_gpt_prefix: StringProperty(
@@ -388,7 +408,7 @@ class GPT_OT_SendMessage(Operator):
             output = process_message(request_answer(gpt.chat_gpt_prefix + " " + gpt.chat_gpt_input + ": "))
             text = bpy.context.space_data.text
             if text is None:
-                text = bpy.data.texts.new("GPT4All")
+                text = bpy.data.texts.new("GPT4All.fountain")
                 bpy.context.space_data.text = text
             text.write(output)
             item = gpt.chat_history.add()
@@ -407,12 +427,13 @@ def request_answer(text: str) -> str:
     try:
         from gpt4all import GPT4All
 
+        gpt = bpy.context.scene.gpt
         preferences = bpy.context.preferences.addons[__name__].preferences
         model = preferences.model_select
-        print(model)
-        print("Text: " + text)
-
-        # output = model.generate(text, max_tokens=2000)
+        print("Model: " + model)
+        preferences = bpy.context.preferences
+        addon_prefs = preferences.addons[__name__].preferences
+        tokens = addon_prefs.tokens
 
         collected_history = " "
         if len(gpt.chat_history) > 0:
@@ -420,12 +441,12 @@ def request_answer(text: str) -> str:
             for history_item in recent_history:
                 collected_history = collected_history + str(history_item.output)
         print(collected_history)
-        model = GPT4All(model, device="gpu")  # , device='gpu') # device='amd', device='intel'
-        #                output = model.generate(text+collected_history, max_tokens=1000)
+        model = GPT4All(model, device="gpu")
 
         with model.chat_session(collected_history):
-            output = model.generate(text, max_tokens=2000)
-        print(output)
+            output = model.generate(text, max_tokens=tokens)
+        print("Input: \n" + gpt.chat_gpt_prefix + " " + gpt.chat_gpt_input + ": ")
+        print("Output: \n" + output)
         return output
     except Exception as e:
         return str(e)
@@ -452,12 +473,7 @@ class GPT_OT_SendSelection(Operator):
 
             text_content = text_editor.region_as_string()
 
-            output = process_message(
-                request_selection_answer(
-                    # gpt.chat_gpt_select_prefix + ": " + text_content
-                    text_content
-                )
-            )
+            output = process_message(request_selection_answer(gpt.chat_gpt_select_prefix + ": " + "\n" + text_content))
 
             text = bpy.context.space_data.text
             if text is None:
@@ -468,7 +484,6 @@ class GPT_OT_SendSelection(Operator):
             item = gpt.chat_history.add()
             item.input = gpt.chat_gpt_select_prefix
             item.output = output
-            # gpt.chat_gpt_input = ''
 
             bpy.ops.renderreminder.play_notification()
         except Exception as e:
@@ -483,27 +498,61 @@ def request_selection_answer(text: str) -> str:
         from gpt4all import GPT4All
 
         gpt = bpy.context.scene.gpt
+        text_editor = bpy.context.space_data.text
         preferences = bpy.context.preferences.addons[__name__].preferences
         model = preferences.model_select
-        print(model)
-        print("Text: " + gpt.chat_gpt_select_prefix + ": " + text)
+        print("Model: " + model)
+        preferences = bpy.context.preferences
+        addon_prefs = preferences.addons[__name__].preferences
+        tokens = addon_prefs.tokens
 
         model = GPT4All(model, device="gpu")  # , device='gpu') # device='amd', device='intel'
         system_template = gpt.chat_gpt_select_prefix + ": \n"
         with model.chat_session(system_template):
-            output = model.generate(text, max_tokens=1000)
-        print(str(output))
+            output = model.generate(text, max_tokens=tokens)
+        print("Input: \n" + gpt.chat_gpt_select_prefix + ": " + "\n" + text_editor.region_as_string())
+        print("Output: \n" + output)
         return output
     except Exception as e:
         return str(e)
 
 
+class GPT_OT_RemoveChatHistoryItem(Operator):
+    bl_idname = "gpt.remove_chat_history_item"
+    bl_label = "Remove Chat History Item"
+    bl_description = "Remove this chat history item"
+
+    index: bpy.props.IntProperty()
+
+    def execute(self, context):
+        gpt = context.scene.gpt
+        if 0 <= self.index < len(gpt.chat_history):
+            gpt.chat_history.remove(self.index)
+        return {"FINISHED"}
+
+
+class GPT_OT_CopyChatHistoryItem(Operator):
+    bl_idname = "gpt.copy_chat_history_item"
+    bl_label = "Copy Chat History Item"
+    bl_description = "Copy this chat history item to clipboard"
+
+    index: bpy.props.IntProperty()
+
+    def execute(self, context):
+        gpt = context.scene.gpt
+        if 0 <= self.index < len(gpt.chat_history):
+            item = gpt.chat_history[self.index]
+            text = f"Input:\n{item.input}\n\nOutput:\n{item.output}"
+            context.window_manager.clipboard = text
+        return {"FINISHED"}
+
+
 class GPT_PT_MainPanel(Panel):
-    bl_label = "Screenwriter Assistant"
+    bl_label = "GPT4ALL"
     bl_idname = "GPT_PT_main_panel"
     bl_space_type = "TEXT_EDITOR"
     bl_region_type = "UI"
-    bl_category = "Screenwriter"
+    bl_category = "GPT4ALL"
 
     def draw(self, context):
         layout = self.layout
@@ -522,7 +571,7 @@ class GPT_PT_MainPanel(Panel):
         row.prop(gpt, "chat_gpt_input", text="")
         row.operator("gpt.send_message", text="", icon="PLAY")
 
-        box = layout
+        box = layout.box()
         box = box.column(align=True)
         text = gpt.chat_gpt_prefix + "\n" + gpt.chat_gpt_input
         label_multiline(context=context, text=text, parent=box)
@@ -538,18 +587,25 @@ class GPT_PT_MainPanel(Panel):
 
         layout = self.layout
         layout = layout.box()
-        layout = layout.column(align=True)
+        layout = layout.column()
         if len(gpt.chat_history) > 0:
             layout.separator()
-            layout.label(text="Chat History (10 Last)")
+            layout.label(text="Chat History (Last 3)")
 
-            # Get the last 10 items from chat history
+            recent_history = gpt.chat_history[-3:]
 
-            recent_history = gpt.chat_history[-10:]
-
-            for item in recent_history:
+            for i, item in enumerate(recent_history):
+                layout.use_property_split = True
                 box = layout.box()
                 box = box.column(align=True)
+
+                row = box.row(align=True)
+                row.alignment = "RIGHT"
+                copy_op = row.operator("gpt.copy_chat_history_item", text="", icon="COPYDOWN")
+                copy_op.index = len(gpt.chat_history) - len(recent_history) + i
+                op = row.operator("gpt.remove_chat_history_item", text="", icon="TRASH")
+                op.index = len(gpt.chat_history) - len(recent_history) + i
+                
                 box.label(text="Input:")
                 label_multiline(context, item.input, box)
                 box.label(text="Output:")
@@ -591,6 +647,8 @@ classes = (
     GPT_OT_install_dependencies,
     GPT_OT_uninstall_dependencies,
     ChatHistoryItem,
+    GPT_OT_RemoveChatHistoryItem,
+    GPT_OT_CopyChatHistoryItem,
     GPT4AllAddonProperties,
     GPT4AllAddonPreferences,
 )
