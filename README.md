@@ -10,3 +10,7 @@ GPT4ALL implemented in the Blender Text Editor for the Blender Screenwriter add-
 - Copy or remove entries of chat history.
 - Dual entries for input text(because Blender's string widget is limited to 256 characters)
 
+## Installation 
+- On Windows: right-click on the icon and "Run as Administrator".
+- Download the add-on: https://github.com/tin2tin/gpt4blender/archive/refs/heads/main.zip
+- Install the add-on as usual in Blender.  
