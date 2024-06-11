@@ -614,7 +614,7 @@ class GPT_PT_MainPanel(Panel):
 
 def process_message(message: str) -> str:
     """Process the message to make it more readable"""
-    message = re.sub(r"[\"#/@<>{}`+=|]", "", message)
+    #message = re.sub(r"[\"#/@<>{}`+=|]", "", message)
     lines = message.split("\n")
     processed = []
     in_code_block = False
