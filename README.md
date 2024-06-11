@@ -14,3 +14,4 @@ GPT4ALL implemented in the Blender Text Editor for the Blender Screenwriter add-
 - On Windows: right-click on the icon and "Run as Administrator".
 - Download the add-on: https://github.com/tin2tin/gpt4blender/archive/refs/heads/main.zip
 - Install the add-on as usual in Blender.  
+- In the add-on preferences click "Install Dependencies".
