@@ -1,5 +1,5 @@
 # GPT4BLENDER
-[GPT4ALL](https://gpt4all.io/index.html) implemented in the Blender Text Editor for the Blender Screenwriter add-on.
+[GPT4ALL](https://gpt4all.io/index.html) implemented in the Blender Text Editor.
 
 ![image](https://github.com/tin2tin/gpt4blender/assets/1322593/8a31fd44-87b2-49c7-860a-643e9fc90cab)
 
