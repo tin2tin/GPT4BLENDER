@@ -15,3 +15,6 @@
 - Download the add-on: https://github.com/tin2tin/gpt4blender/archive/refs/heads/main.zip
 - Install the add-on as usual in Blender.  
 - In the add-on preferences click "Install Dependencies".
+
+## The Models
+Get info here: https://observablehq.com/@simonw/gpt4all-models
