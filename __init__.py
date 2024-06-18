@@ -44,11 +44,9 @@ def python_exec():
     elif isMacOS():
         try:
             # 2.92 and older
-
             path = bpy.app.binary_path_python
         except AttributeError:
             # 2.93 and later
-
             import sys
 
             path = sys.executable
@@ -81,8 +79,6 @@ def import_module(module, install_module):
 
 
 # Function to check and install GPT4All
-
-
 def ensure_gpt4all_installed():
     module = "gpt4all"
 
@@ -94,7 +90,6 @@ def ensure_gpt4all_installed():
         print(f"{e}")
         import_module(module, module)
         # get_supported_models()
-
         return []
 
 
@@ -120,31 +115,29 @@ def uninstall_module_with_dependencies(module_name):
     pybin = python_exec()
     dependencies = get_module_dependencies(module_name)
     # Uninstall the module
-
     subprocess.run([pybin, "-m", "pip", "uninstall", "-y", module_name])
     # Uninstall the dependencies
-
     for dependency in dependencies:
         print("\n ")
         if len(dependency) > 5 and str(dependency[5].lower) != "numpy":
             subprocess.run([pybin, "-m", "pip", "uninstall", "-y", dependency])
 
 
-def get_supported_models():
-    ensure_gpt4all_installed()  # Ensure gpt4all is installed
-    try:
-        from gpt4all import GPT4All
+#def get_supported_models():
+#    ensure_gpt4all_installed()  # Ensure gpt4all is installed
+#    try:
+#        from gpt4all import GPT4All
 
-        gpt4all = GPT4All()
-        models = gpt4all.list_models()
-        print(models)
-        #        supported_models = [(model, model, f"Use {model} model") for model in models]
-        #        print("Supported models:", supported_models)
+#        gpt4all = GPT4All()
+#        models = gpt4all.list_models()
+#        print(models)
+#        #        supported_models = [(model, model, f"Use {model} model") for model in models]
+#        #        print("Supported models:", supported_models)
 
-        return models
-    except Exception as e:
-        print(f"Error retrieving supported models: {e}")
-        return []
+#        return models
+#    except Exception as e:
+#        print(f"Error retrieving supported models: {e}")
+#        return []
 
 
 class GPT4AllAddonPreferences(AddonPreferences):
@@ -285,16 +278,15 @@ class GPT4AllAddonPreferences(AddonPreferences):
     device_select: EnumProperty(
         name="Device",
         items={
-        ("cpu", "CPU", "Model will run on the central processing unit"),
-        ("gpu", "GPU", "Use Metal on ARM64 macOS, otherwise the same as 'kompute'"),
-        ("kompute", "Kompute", "Use the best GPU provided by the Kompute backend"),
-        ("cuda", "CUDA", "Use the best GPU provided by the CUDA backend"),
-        ("amd", "AMD", "Use the best GPU provided by the Kompute backend from this vendor"),
-        ("nvidia", "NVIDIA", "Use the best GPU provided by the Kompute backend from this vendor")
+            ("cpu", "CPU", "Model will run on the central processing unit"),
+            ("gpu", "GPU", "Use Metal on ARM64 macOS, otherwise the same as 'kompute'"),
+            ("kompute", "Kompute", "Use the best GPU provided by the Kompute backend"),
+            ("cuda", "CUDA", "Use the best GPU provided by the CUDA backend"),
+            ("amd", "AMD", "Use the best GPU provided by the Kompute backend from this vendor"),
+            ("nvidia", "NVIDIA", "Use the best GPU provided by the Kompute backend from this vendor"),
         },
         default="cuda",
-    ) 
-
+    )
 
     def draw(self, context):
         layout = self.layout
@@ -312,15 +304,14 @@ class GPT4AllAddonPreferences(AddonPreferences):
         row.prop(self, "soundselect")
         if self.soundselect == "user":
             row.prop(self, "usersound", text="")
-        row.operator("renderreminder.play_notification", text="", icon="PLAY")
+        row.operator("renderreminder.gpt_play_notification", text="", icon="PLAY")
         row.active = self.playsound
-
 
 
 class GPT_OT_sound_notification(Operator):
     """Test your notification settings"""
 
-    bl_idname = "renderreminder.play_notification"
+    bl_idname = "renderreminder.gpt_play_notification"
     bl_label = "Test Notification"
     bl_options = {"REGISTER", "UNDO"}
 
@@ -421,15 +412,10 @@ class GPT_OT_SendMessage(Operator):
         gpt = context.scene.gpt
         try:
             output = process_message(request_answer(gpt.chat_gpt_prefix + " " + gpt.chat_gpt_input + ": "))
-            text = bpy.context.space_data.text
-            if text is None:
-                text = bpy.data.texts.new("GPT4All.fountain")
-                bpy.context.space_data.text = text
-            text.write(output)
             item = gpt.chat_history.add()
             item.input = gpt.chat_gpt_input
             item.output = output
-            bpy.ops.renderreminder.play_notification()
+            bpy.ops.renderreminder.gpt_play_notification()
         except Exception as e:
             self.report({"ERROR"}, str(e))
         return {"FINISHED"}
@@ -458,8 +444,16 @@ def request_answer(text: str) -> str:
         print(collected_history)
         model = GPT4All(model, device=addon_prefs.device_select)
 
+        text_doc = bpy.context.space_data.text
+        if text_doc is None:
+            text_doc = bpy.data.texts.new("Chat GPT")
+            bpy.context.space_data.text = text_doc
+        output = ""
         with model.chat_session(collected_history):
-            output = model.generate(text, max_tokens=tokens)
+            for token in model.generate(text, max_tokens=tokens, streaming=True):
+                output = output + token
+                text_doc.write(token)
+                bpy.ops.wm.redraw_timer(type="DRAW_WIN_SWAP", iterations=1)
         print("Input: \n" + gpt.chat_gpt_prefix + " " + gpt.chat_gpt_input + ": ")
         print("Output: \n" + output)
         return output
@@ -480,27 +474,20 @@ class GPT_OT_SendSelection(Operator):
         gpt = context.scene.gpt
 
         try:
-            # Get the active text editor
-
             text_editor = bpy.context.space_data.text
-
-            # Get the text content
-
             text_content = text_editor.region_as_string()
 
-            output = process_message(request_selection_answer(gpt.chat_gpt_select_prefix + ": " + "\n" + text_content))
-
-            text = bpy.context.space_data.text
-            if text is None:
-                text = bpy.data.texts.new("Chat GPT")
-                bpy.context.space_data.text = text
-            text.write(output)
+            output = process_message(
+                request_selection_answer(
+                    "Rewrite without commenting, " + gpt.chat_gpt_select_prefix + ": " + "\n" + text_content
+                )
+            )
 
             item = gpt.chat_history.add()
             item.input = gpt.chat_gpt_select_prefix
             item.output = output
 
-            bpy.ops.renderreminder.play_notification()
+            bpy.ops.renderreminder.gpt_play_notification()
         except Exception as e:
             self.report({"ERROR"}, str(e))
         return {"FINISHED"}
@@ -523,8 +510,17 @@ def request_selection_answer(text: str) -> str:
 
         model = GPT4All(model, device=addon_prefs.device_select)
         system_template = gpt.chat_gpt_select_prefix + ": \n"
+
+        text_doc = bpy.context.space_data.text
+        if text_doc is None:
+            text_doc = bpy.data.texts.new("Chat GPT")
+            bpy.context.space_data.text = text_doc
+        output = ""
         with model.chat_session(system_template):
-            output = model.generate(text, max_tokens=tokens)
+            for token in model.generate(text, max_tokens=tokens, streaming=True):
+                output = output + token
+                text_doc.write(token)
+                bpy.ops.wm.redraw_timer(type="DRAW_WIN_SWAP", iterations=1)
         print("Input: \n" + gpt.chat_gpt_select_prefix + ": " + "\n" + text_editor.region_as_string())
         print("Output: \n" + output)
         return output
@@ -600,16 +596,15 @@ class GPT_PT_MainPanel(Panel):
         row.prop(gpt, "chat_gpt_select_prefix", text="")
         row.operator("gpt.send_selection", text="", icon="PLAY")
 
-        layout = self.layout
-        layout = layout.box()
-        layout = layout.column()
         if len(gpt.chat_history) > 0:
-            layout.separator()
-            layout.label(text="Chat History (Last 3)")
-
+            layout = self.layout
+            layout = layout.box()
+            layout = layout.column()
             recent_history = gpt.chat_history[-3:]
+            layout.separator()
+            layout.label(text="Chat History (Last " + str(len(recent_history)) + ")")
 
-            for i, item in enumerate(recent_history):
+            for i, item in enumerate(reversed(recent_history)):
                 layout.use_property_split = True
                 box = layout.box()
                 box = box.column(align=True)
@@ -620,7 +615,7 @@ class GPT_PT_MainPanel(Panel):
                 copy_op.index = len(gpt.chat_history) - len(recent_history) + i
                 op = row.operator("gpt.remove_chat_history_item", text="", icon="TRASH")
                 op.index = len(gpt.chat_history) - len(recent_history) + i
-                
+
                 box.label(text="Input:")
                 label_multiline(context, item.input, box)
                 box.label(text="Output:")
@@ -629,7 +624,7 @@ class GPT_PT_MainPanel(Panel):
 
 def process_message(message: str) -> str:
     """Process the message to make it more readable"""
-    #message = re.sub(r"[\"#/@<>{}`+=|]", "", message)
+    # message = re.sub(r"[\"#/@<>{}`+=|]", "", message)
     lines = message.split("\n")
     processed = []
     in_code_block = False
