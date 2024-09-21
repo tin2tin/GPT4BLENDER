@@ -1,3 +1,4 @@
+[<img src="https://img.shields.io/badge/Discord%20-%20Invite">](https://discord.gg/HMYpnPzbTm) ![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/tintwotin)
 # GPT4BLENDER
 [GPT4ALL](https://gpt4all.io/index.html) implemented in the Blender Text Editor.
 
