@@ -88,7 +88,7 @@ def ensure_gpt4all_installed():
         print("Checking: GPT4ALL is installed.")
     except Exception as e:
         print(f"{e}")
-        import_module(module, module)
+        import_module(module, "gpt4all[cuda]")
         # get_supported_models()
         return []
 
@@ -170,14 +170,19 @@ class GPT4AllAddonPreferences(AddonPreferences):
         name="Model",
         items={
             (
-                "Meta-Llama-3-8B-Instruct.Q4_0.gguf",
-                "Meta-Llama-3-8B-Instruct.Q4_0 8 GB",
-                "https://gpt4all.io/models/gguf/Meta-Llama-3-8B-Instruct.Q4_0.gguf",
-            ),
-            (
                 "Nous-Hermes-2-Mistral-7B-DPO.Q4_0.gguf",
                 "Nous-Hermes-2-Mistral-7B-DPO.Q4_0 8 GB",
                 "https://huggingface.co/NousResearch/Nous-Hermes-2-Mistral-7B-DPO-GGUF/resolve/main/Nous-Hermes-2-Mistral-7B-DPO.Q4_0.gguf",
+            ),
+            (
+                "qwen2.5-coder-7b-instruct-q4_0.gguf",
+                "Qwen2.5 Coder 7b Instruct Q4 8 GB",
+                "https://huggingface.co/Qwen/Qwen2.5-Coder-7B-Instruct-GGUF/resolve/main/qwen2.5-coder-7b-instruct-q4_0.gguf",
+            ),
+            (
+                "Meta-Llama-3-8B-Instruct.Q4_0.gguf",
+                "Meta-Llama-3-8B-Instruct.Q4_0 8 GB",
+                "https://gpt4all.io/models/gguf/Meta-Llama-3-8B-Instruct.Q4_0.gguf",
             ),
             (
                 "mistral-7b-instruct-v0.1.Q4_0.gguf",
@@ -221,51 +226,51 @@ class GPT4AllAddonPreferences(AddonPreferences):
                 "mpt-7b-chat.gguf4.Q4_0 8 GB",
                 "https://gpt4all.io/models/gguf/mpt-7b-chat.gguf4.Q4_0.gguf",
             ),
-            (
-                "Phi-3-mini-4k-instruct.Q4_0.gguf",
-                "Phi-3-mini-4k-instruct.Q4_0 4 GB",
-                "https://gpt4all.io/models/gguf/Phi-3-mini-4k-instruct.Q4_0.gguf",
-            ),
-            (
-                "orca-mini-3b-gguf2-q4_0.gguf",
-                "orca-mini-3b-gguf2-q4_0 4 GB",
-                "https://gpt4all.io/models/gguf/orca-mini-3b-gguf2-q4_0.gguf",
-            ),
-            (
-                "replit-code-v1_5-3b-newbpe-q4_0.gguf",
-                "replit-code-v1_5-3b-newbpe-q4_0 4 GB",
-                "https://gpt4all.io/models/gguf/replit-code-v1_5-3b-newbpe-q4_0.gguf",
-            ),
-            (
-                "starcoder-newbpe-q4_0.gguf",
-                "starcoder-newbpe-q4_0 4 GB",
-                "https://gpt4all.io/models/gguf/starcoder-newbpe-q4_0.gguf",
-            ),
+#            (
+#                "Phi-3-mini-4k-instruct.Q4_0.gguf",
+#                "Phi-3-mini-4k-instruct.Q4_0 4 GB",
+#                "https://gpt4all.io/models/gguf/Phi-3-mini-4k-instruct.Q4_0.gguf",
+#            ),
+#            (
+#                "orca-mini-3b-gguf2-q4_0.gguf",
+#                "orca-mini-3b-gguf2-q4_0 4 GB",
+#                "https://gpt4all.io/models/gguf/orca-mini-3b-gguf2-q4_0.gguf",
+#            ),
+#            (
+#                "replit-code-v1_5-3b-newbpe-q4_0.gguf",
+#                "replit-code-v1_5-3b-newbpe-q4_0 4 GB",
+#                "https://gpt4all.io/models/gguf/replit-code-v1_5-3b-newbpe-q4_0.gguf",
+#            ),
+#            (
+#                "starcoder-newbpe-q4_0.gguf",
+#                "starcoder-newbpe-q4_0 4 GB",
+#                "https://gpt4all.io/models/gguf/starcoder-newbpe-q4_0.gguf",
+#            ),
             (
                 "rift-coder-v0-7b-q4_0.gguf",
                 "rift-coder-v0-7b-q4_0 8 GB",
                 "https://gpt4all.io/models/gguf/rift-coder-v0-7b-q4_0.gguf",
             ),
-            (
-                "all-MiniLM-L6-v2.gguf2.f16.gguf",
-                "all-MiniLM-L6-v2.gguf2.f16 1 GB",
-                "https://gpt4all.io/models/gguf/all-MiniLM-L6-v2.gguf2.f16.gguf",
-            ),
+#            (
+#                "all-MiniLM-L6-v2.gguf2.f16.gguf",
+#                "all-MiniLM-L6-v2.gguf2.f16 1 GB",
+#                "https://gpt4all.io/models/gguf/all-MiniLM-L6-v2.gguf2.f16.gguf",
+#            ),
             (
                 "em_german_mistral_v01.Q4_0.gguf",
                 "em_german_mistral_v01.Q4_0 8 GB",
                 "https://huggingface.co/TheBloke/em_german_mistral_v01-GGUF/resolve/main/em_german_mistral_v01.Q4_0.gguf",
             ),
-            (
-                "nomic-embed-text-v1.f16.gguf",
-                "nomic-embed-text-v1.f16 1 GB",
-                "https://gpt4all.io/models/gguf/nomic-embed-text-v1.f16.gguf",
-            ),
-            (
-                "nomic-embed-text-v1.5.f16.gguf",
-                "nomic-embed-text-v1.5.f16 1 GB",
-                "https://gpt4all.io/models/gguf/nomic-embed-text-v1.5.f16.gguf",
-            ),
+#            (
+#                "nomic-embed-text-v1.f16.gguf",
+#                "nomic-embed-text-v1.f16 1 GB",
+#                "https://gpt4all.io/models/gguf/nomic-embed-text-v1.f16.gguf",
+#            ),
+#            (
+#                "nomic-embed-text-v1.5.f16.gguf",
+#                "nomic-embed-text-v1.5.f16 1 GB",
+#                "https://gpt4all.io/models/gguf/nomic-embed-text-v1.5.f16.gguf",
+#            ),
         },
         default="Nous-Hermes-2-Mistral-7B-DPO.Q4_0.gguf",
     )
@@ -449,7 +454,52 @@ def request_answer(text: str) -> str:
             text_doc = bpy.data.texts.new("Chat GPT")
             bpy.context.space_data.text = text_doc
         output = ""
-        with model.chat_session(collected_history):
+        
+        system_template = """You'll act as a screenwriting co-author focused on writing and enhancing scenes while adhering to these principles:
+        
+        0. Do not include:
+            comments
+            suggestions
+            notes
+            explanations
+            markdown
+            html
+            code
+            
+
+        1. Format & Style:
+           - Write in Fountain format for screenplays.
+           - Use concise, straightforward prose with no clichés, adverbs, or literary embellishments.
+
+        2. Narrative Techniques:
+           - Prioritize "show, don't tell" by using actions to reveal emotions and traits.
+           - Avoid summarizing or reflective conclusions; end scenes *in media res*.
+           - Ensure each scene has a purpose, contributing to the story’s structure and character arcs.
+
+        3. Characterization & Dialogue:
+           - Craft realistic, flawed characters whose actions align with their backstories.
+           - Write casual, authentic dialogue infused with subtext.
+
+        4. Action & Description:
+           - Emphasize direct, precise descriptions and sensory details for immersive world-building.
+           - Use strong nouns and verbs, avoiding qualifiers or broader reflections.
+
+        5. Structure & Themes:
+           - Follow a logical, detailed progression with a clear beginning, middle, and end.
+           - Develop themes through character-driven storytelling, balancing plot and emotional depth.
+           
+        6. Fountain formatting:
+            Scene Headings start with INT, EXT, and written in CAPS.
+            Action is written as normal text.
+            Character names are in UPPERCASE + line break.
+            Dialogue comes right after Character  + line break.
+            Parentheticals are wrapped in (parentheses) + line break.
+            Transitions end in TO:  + line break
+
+        \n"""
+
+        #system_template = "You're a screenwriter assistant. When asked to write screenplays, you use fountain screenplay formatting with no markdown. When writing dialogue, you never let characters say what they feel or want. Parenticals should only be used, if nessessary, for a single word describing how the following dialog should be delivered emotionally.\n"
+        with model.chat_session(system_template, collected_history):
             for token in model.generate(text, max_tokens=tokens, streaming=True):
                 output = output + token
                 text_doc.write(token)
